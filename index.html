@@ -164,6 +164,72 @@
         
 
 <div class="post">
+    <a href="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/">
+        <h2 class="post-title">AirSim更换无人机模型</h2>
+    </a>
+    <div class="category-and-date">
+        
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/7/5
+        </span>
+        
+        
+    </div>
+    <div class="description">
+        <div class="content" v-pre>
+            
+            <h1 id="实现效果"><a href="#实现效果" class="headerlink" title="实现效果"></a>实现效果</h1><p>简单替换无人机模型，质量惯性等由虚幻计算得出，无法进一步改善飞控。</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/image-1.png" class="">
+
+<h1 id="具体步骤"><a href="#具体步骤" class="headerlink" title="具体步骤"></a>具体步骤</h1><h2 id="1-模型下载"><a href="#1-模型下载" class="headerlink" title="1.模型下载"></a>1.模型下载</h2><p>可在<br><a target="_blank" rel="noopener" href="https://www.turbosquid.com/zh_cn/3d-models/3d-model-inspire-1-2088818">https://www.turbosquid.com/zh_cn/3d-models/3d-model-inspire-1-2088818</a><br>下载到免费4轴飞行器模型，本文也以此模型资源替换内置飞行器。</p>
+<h2 id="2-模型处理"><a href="#2-模型处理" class="headerlink" title="2.模型处理"></a>2.模型处理</h2><p>使用blender导入模型，首先将无人机前方对准X轴，隐藏在body处找到4个螺旋桨。其次进入物体模式，全选剩下机身部分 Ctrl+J 合并成一个单独的模型如下。</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/image5.png" class="">  
+
+<p>导出成.fbx格式，导出时仅导出骨架和网格，变换选择x向前，z向上。</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/image-6.png" class="">
+
+<p>导出机身后删除机身整体，取消隐藏螺旋桨并将位置偏移量设置为0，0，0。再导出为一个单独的螺旋桨文件。结果如下图</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/propfbx.png" class="">
+
+<h2 id="3-导入UE"><a href="#3-导入UE" class="headerlink" title="3.导入UE"></a>3.导入UE</h2><p>新建任意文件夹，分别导入第2步中建好的机身和螺旋桨文件。取消勾选骨骼网络体和合并网格体即可。</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/image-2.png" class="">
+
+<p>复制蓝图 AirSim内容&#x2F;Blueprints&#x2F;BP_FlyingPawn（此为原始模型）(若内容浏览器中无AirSim内容则在视图选项中勾选“显示插件内容”)到你新建的文件夹中。在组件栏中将bodymesh，prop 0-3 的静态网格体替换成导入的机身和螺旋桨，在视口界面调整各螺旋桨与摄像头相对机身的位置（若被遮挡可在渲染界面取消可视）。<br>结果如下：</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/image-3.png" class="">
+
+<h2 id="4-修改-settings-json"><a href="#4-修改-settings-json" class="headerlink" title="4.修改 settings.json"></a>4.修改 settings.json</h2><p>在settings.json中添加pawnpath项，格式为 “PawnPaths”: {<br>    “inspire”（无人机模型名）: {“PawnBP”: “Class’&#x2F;Game&#x2F;Quadrotor&#x2F;inspire.inspire_C’”（类地址，inspire即为第三步中修改的蓝图名称）}<br>  }，随后新建载具，在其Pawnpath属性中选择 inspire即完成模型替换。</p>
+<img src="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/image-4.png" class="">
+
+<p>欢迎留言讨论</p>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://fs-driverless.github.io/Formula-Student-Driverless-Simulator/v2.2.0/import-car-3d-model/">官方更换汽车模型教程</a> </li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/362502080">AirSim(11) - 改变无人机的形状</a> </li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/lihuanl/article/details/122718143">AirSim中使用多种模型无人机进行仿真</a></li>
+</ul>
+
+            
+        </div>
+    </div>
+    <div class="post-tags">
+        
+        <span class="icon">
+            <i class="fa-solid fa-tags fa-fw"></i>
+        </span>
+        
+        
+        <span class="tag">
+            
+            <a href="/tags/AirSim/" style="color: #ff7d73">AirSim</a>
+        </span>
+        
+    </div>
+    <a href="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/" class="go-post">阅读全文</a>
+</div>
+
+<div class="post">
     <a href="/2023/07/04/hello-world/">
         <h2 class="post-title">Hello World</h2>
     </a>
@@ -198,7 +264,7 @@
         
         <span class="tag">
             
-            <a href="/tags/%E7%BE%8E%E5%8C%96/" style="color: #00bcd4">美化</a>
+            <a href="/tags/%E7%BE%8E%E5%8C%96/" style="color: #ff7d73">美化</a>
         </span>
         
     </div>
