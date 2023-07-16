@@ -164,6 +164,79 @@
         
 
 <div class="post">
+    <a href="/2023/07/16/airsim%E7%89%A9%E7%90%86/">
+        <h2 class="post-title">airsim物理</h2>
+    </a>
+    <div class="category-and-date">
+        
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/7/16
+        </span>
+        
+        
+    </div>
+    <div class="description">
+        <div class="content" v-pre>
+            
+            <h2 id="模拟方法"><a href="#模拟方法" class="headerlink" title="模拟方法"></a>模拟方法</h2><p>原始论文 <a target="_blank" rel="noopener" href="https://microsoft.github.io/AirSim/paper/main.pdf">https://microsoft.github.io/AirSim/paper/main.pdf</a></p>
+<p>在airsim中四旋翼无人机根据各桨转速计算力矩，但被当做质点看待，计算整体的速度，加速度。</p>
+<img src="/2023/07/16/airsim%E7%89%A9%E7%90%86/image.png" class="">
+<img src="/2023/07/16/airsim%E7%89%A9%E7%90%86/image-2.png" class="">
+<img src="/2023/07/16/airsim%E7%89%A9%E7%90%86/image-3.png" class="">
+<img src="/2023/07/16/airsim%E7%89%A9%E7%90%86/image-4.png" class="">
+
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><h3 id="物理参数设置"><a href="#物理参数设置" class="headerlink" title="物理参数设置"></a>物理参数设置</h3><p>可在 AirLib\include\vehicles\multirotor\RotorParams.hpp 中设置螺旋桨各参数</p>
+<p>可在 AirLib\include\vehicles\multirotor\MultiRotorParams.hpp\setupFrameGenericQuad 中设置无人机参数。</p>
+<p>在simplefight下默认加载这个模型，就算换了模型还是按照这个函数中的参数加载，仿真中的参数与虚幻蓝图中参数设置没有任何关联，计算中的参数都按这个来。</p>
+<h3 id="更新无人机状态-："><a href="#更新无人机状态-：" class="headerlink" title="更新无人机状态 ："></a>更新无人机状态 ：</h3><h4 id="1-假设不发生碰撞"><a href="#1-假设不发生碰撞" class="headerlink" title="1.假设不发生碰撞"></a>1.假设不发生碰撞</h4><pre><code>// https://github.com/microsoft/AirSim/blob/main/AirLib/include/physics/FastPhysicsEngine.hpp#L315
+avg_linear = current.twist.linear + current.accelerations.linear * (0.5f * dt_real);
+avg_angular = current.twist.angular + current.accelerations.angular * (0.5f * dt_real);
+const Wrench drag_wrench = getDragWrench(body, current.pose.orientation, avg_linear, avg_angular, wind);
+next_wrench = body_wrench + drag_wrench;
+
+// https://github.com/microsoft/AirSim/blob/main/AirLib/include/physics/FastPhysicsEngine.hpp#L412
+next.pose.position = current_pose.position + avg_linear * dt_real;
+</code></pre>
+<h4 id="2-检测碰撞"><a href="#2-检测碰撞" class="headerlink" title="2.检测碰撞"></a>2.检测碰撞</h4><pre><code>//if there is collision, see if we need collision response
+const CollisionInfo collision_info = body.getCollisionInfo();
+CollisionResponse&amp; collision_response = body.getCollisionResponseInfo();
+if (body.isGrounded() || (collision_info.has_collided &amp;&amp; collision_response.collision_time_stamp != collision_info.time_stamp)) &#123;
+    bool is_collision_response = getNextKinematicsOnCollision(dt, collision_info, body, current, next, next_wrench, enable_ground_lock_);
+     updateCollisionResponseInfo(collision_info, next, is_collision_response, collision_response);
+&#125;
+</code></pre>
+<h4 id="3-碰撞处理"><a href="#3-碰撞处理" class="headerlink" title="3.碰撞处理"></a>3.碰撞处理</h4><p>较复杂，见<br><a target="_blank" rel="noopener" href="https://github.com/microsoft/AirSim/blob/main/AirLib/include/physics/FastPhysicsEngine.hpp#L129">https://github.com/microsoft/AirSim/blob/main/AirLib/include/physics/FastPhysicsEngine.hpp#L129</a><br>及 <a target="_blank" rel="noopener" href="https://gafferongames.com/post/collision_response_and_coulomb_friction/">https://gafferongames.com/post/collision_response_and_coulomb_friction/</a></p>
+<h2 id="AirSim-中的-wind-模型"><a href="#AirSim-中的-wind-模型" class="headerlink" title="AirSim 中的 wind 模型"></a>AirSim 中的 wind 模型</h2><p>airsim中的wind模型与UE中的 winddirectionSOurce类关系不大，而是通过直接设置仿真物理引擎中的wind vector模拟。</p>
+<pre><code>//https://github.com/microsoft/AirSim/blob/main/AirLib/include/physics/FastPhysicsEngine.hpp#L325
+    const real_T air_density = body.getEnvironment().getState().air_density;
+    // Use relative velocity of the body wrt wind
+    const Vector3r relative_vel = linear_vel - wind_world;
+    const Vector3r linear_vel_body = VectorMath::transformToBodyFrame(relative_vel, orientation);
+</code></pre>
+
+            
+        </div>
+    </div>
+    <div class="post-tags">
+        
+        <span class="icon">
+            <i class="fa-solid fa-tags fa-fw"></i>
+        </span>
+        
+        
+        <span class="tag">
+            
+            <a href="/tags/AirSim/" style="color: #ff7d73">AirSim</a>
+        </span>
+        
+    </div>
+    <a href="/2023/07/16/airsim%E7%89%A9%E7%90%86/" class="go-post">阅读全文</a>
+</div>
+
+<div class="post">
     <a href="/2023/07/05/AirSim%E6%9B%B4%E6%8D%A2%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A8%A1%E5%9E%8B/">
         <h2 class="post-title">AirSim更换无人机模型</h2>
     </a>
@@ -222,7 +295,7 @@
         
         <span class="tag">
             
-            <a href="/tags/AirSim/" style="color: #03a9f4">AirSim</a>
+            <a href="/tags/AirSim/" style="color: #ffa2c4">AirSim</a>
         </span>
         
     </div>
@@ -264,7 +337,7 @@
         
         <span class="tag">
             
-            <a href="/tags/%E7%BE%8E%E5%8C%96/" style="color: #ffa2c4">美化</a>
+            <a href="/tags/%E7%BE%8E%E5%8C%96/" style="color: #00a596">美化</a>
         </span>
         
     </div>
